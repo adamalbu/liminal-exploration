@@ -1,10 +1,10 @@
 use std::{fmt, io::Write};
 
 use map::{Direction, Map, Room};
-use text_matching::get_user_input;
+use user_input::get_user_input;
 
 mod map;
-mod text_matching;
+mod user_input;
 
 #[allow(dead_code)]
 fn cosine_similarity(v1: &[f32], v2: &[f32]) -> f32 {
