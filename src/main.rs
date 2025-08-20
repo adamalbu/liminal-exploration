@@ -1,11 +1,12 @@
-use dotenv::dotenv;
-use llm::{backends::google::Google, embedding::EmbeddingProvider};
-use map::{Direction, Exits, Map, Room};
+use std::{fmt, io::Write};
+
+use map::{Direction, Map, Room};
 use text_matching::get_user_input;
 
 mod map;
 mod text_matching;
 
+#[allow(dead_code)]
 fn cosine_similarity(v1: &[f32], v2: &[f32]) -> f32 {
     if v1.len() != v2.len() {
         return 0.0; // Vectors must be of the same dimension
@@ -22,37 +23,68 @@ fn cosine_similarity(v1: &[f32], v2: &[f32]) -> f32 {
     dot_product / (magnitude1 * magnitude2)
 }
 
-#[tokio::main]
-async fn main() {
-    dotenv().ok();
-    let gemini_api_key = dotenv::var("GEMINI_API_KEY").unwrap();
+enum Command {
+    Travel(Direction),
+}
 
-    let client = Google::new(
-        gemini_api_key,
-        Some("gemini-embedding-001".into()),
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-    );
+enum ParseCommandError {
+    NoCommandPresent,
+    UnknownCommand(String),
+    IncorrectArgument(String),
+    NotEnoughArguments(u8),
+}
 
-    // let embeds = client
-    //     .embed(vec![
-    //         "What is the meaning of life?".into(),
-    //         "I am asking about the meaning of life.".into(),
-    //     ])
-    //     .await
-    //     .unwrap();
-    // println!(
-    //     "{}",
-    //     cosine_similarity(embeds.get(0).unwrap(), embeds.get(1).unwrap())
-    // );
+impl std::fmt::Display for ParseCommandError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ParseCommandError::IncorrectArgument(arg) => write!(
+                f,
+                "Incorrect argument '{}'. Please enter a correct argument.",
+                arg
+            ),
+            ParseCommandError::NoCommandPresent => write!(f, "Please enter a command."),
+            ParseCommandError::NotEnoughArguments(num) => write!(
+                f,
+                "Not enough arguments. Please enter {} argument{}.",
+                num,
+                if *num == 1 { "" } else { "s" }
+            ),
+            ParseCommandError::UnknownCommand(command) => write!(
+                f,
+                "Command '{}' not found. Please enter a valid command.",
+                command
+            ),
+        }
+    }
+}
 
+impl Command {
+    fn parse_command(input_string: String) -> Result<Self, ParseCommandError> {
+        let input_lowercase = input_string.to_lowercase();
+        let mut parts = input_lowercase.split_whitespace();
+
+        let command_str = parts.next().ok_or(ParseCommandError::NoCommandPresent)?;
+
+        match command_str {
+            "go" | "travel" => {
+                let direction_str = parts
+                    .next()
+                    .ok_or(ParseCommandError::NotEnoughArguments(1))?;
+                let direction = match direction_str {
+                    "north" => Direction::North,
+                    "east" => Direction::East,
+                    "south" => Direction::South,
+                    "west" => Direction::West,
+                    _ => return Err(ParseCommandError::IncorrectArgument(direction_str.into())),
+                };
+                Ok(Self::Travel(direction))
+            }
+            _ => Err(ParseCommandError::UnknownCommand(command_str.into())),
+        }
+    }
+}
+
+fn main() {
     let root_room = Room::new_random_with_entry(
         "The room is an endless maze of peeling, \
        yellowed wallpaper and damp, stained carpet, all under the harsh, unblinking glare of a \
@@ -61,8 +93,28 @@ async fn main() {
             .into(),
         Direction::North,
     );
-    let map = Map::new(root_room);
+    let mut map = Map::new(root_room);
+    println!("Welcome to Liminal Exploration!");
     loop {
-        let input = get_user_input();
+        println!("{}", map.get_current_room().get_info());
+        print!("> ");
+        std::io::stdout().flush().unwrap();
+
+        let input = get_user_input().to_lowercase();
+
+        let parsed_command = match Command::parse_command(input) {
+            Ok(command) => command,
+            Err(err) => {
+                println!("{}", err);
+                continue;
+            }
+        };
+
+        match parsed_command {
+            Command::Travel(direction) => match map.travel(direction) {
+                Ok(_) => println!("You went {}", direction),
+                Err(err) => println!("{}", err),
+            },
+        }
     }
 }

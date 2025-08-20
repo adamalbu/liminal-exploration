@@ -86,14 +86,27 @@ impl Direction {
     }
 }
 
+impl std::fmt::Display for Direction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::North => write!(f, "north"),
+            Self::East => write!(f, "east"),
+            Self::South => write!(f, "south"),
+            Self::West => write!(f, "west"),
+            Self::Up => write!(f, "up"),
+            Self::Down => write!(f, "down"),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Room {
     pub description: String,
     pub exits: Exits,
 }
 
-impl std::fmt::Display for Room {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Room {
+    pub fn get_info(&self) -> String {
         let mut exit_names = Vec::new();
 
         // Check each bitflag and add the corresponding string to the vector.
@@ -120,7 +133,13 @@ impl std::fmt::Display for Room {
             }
         };
 
-        write!(f, "{}\nExits are {}", self.description, exits_str)
+        format!("{}\nExits are {}", self.description, exits_str)
+    }
+}
+
+impl std::fmt::Display for Room {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.get_info())
     }
 }
 
@@ -134,7 +153,7 @@ impl Room {
 
         let exits = if random_num > 0.8 {
             Exits::all_2d()
-        } else if random_num > 0.65 {
+        } else if random_num > 0.4 {
             let mut exits: Exits = entry_direction.opposite().into();
             exits |= Exits::random_exits(2, Exits::all_2d() & !exits);
             exits
@@ -157,12 +176,16 @@ pub struct Map {
 }
 
 #[derive(Clone, Copy, Debug)]
-enum TravelError {
+pub enum TravelError {
     NoExit,
 }
 
-enum GetEdgeError {
-    NoEdge,
+impl std::fmt::Display for TravelError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NoExit => write!(f, "No exit"),
+        }
+    }
 }
 
 impl Map {
@@ -175,7 +198,7 @@ impl Map {
         }
     }
 
-    pub fn travel(&mut self, direction: Direction) -> Result<(), TravelError> {
+    pub fn travel(&mut self, direction: Direction) -> Result<String, TravelError> {
         let current_room = self.get_current_room();
         if current_room.exits.contains(direction.into()) {
             let new_room_id = match self.get_edge(self.current_room_id, direction) {
@@ -187,19 +210,16 @@ impl Map {
                 }
             };
             self.current_room_id = new_room_id;
-            Ok(())
+            Ok(self.get_current_room().get_info())
         } else {
             Err(TravelError::NoExit)
         }
     }
 
     fn generate_room(&mut self, entry_direction: Direction) -> NodeIndex {
-        let new_room = Room::new(
-            "Generated room".into(),
-            Exits::WEST | entry_direction.opposite().into(),
-        );
+        let new_room = Room::new_random_with_entry("[generated room]".into(), entry_direction); // TODO: Create actual description
         self.graph.add_node(new_room)
-    } // TODO: Implement actual generation
+    }
 
     fn connect_rooms(
         &mut self,
@@ -212,11 +232,12 @@ impl Map {
             .add_edge(to_room, from_room, direction.opposite());
     }
 
-    fn get_room(&self, room_id: NodeIndex<u32>) -> &Room {
+    #[allow(dead_code)]
+    pub fn get_room(&self, room_id: NodeIndex<u32>) -> &Room {
         &self.graph[room_id]
     }
 
-    fn get_current_room(&self) -> &Room {
+    pub fn get_current_room(&self) -> &Room {
         &self.graph[self.current_room_id]
     }
 
@@ -235,20 +256,5 @@ impl Map {
             };
         }
         None
-    }
-}
-
-fn main() {
-    let mut map = Map::new(Room::new("main room".into(), Exits::NORTH | Exits::EAST));
-    println!("{}", map.get_current_room());
-    let result = map.travel(Direction::North);
-    match result {
-        Ok(()) => println!("{}", map.get_current_room()),
-        Err(e) => println!("{:?}", e),
-    }
-    let result = map.travel(Direction::South);
-    match result {
-        Ok(()) => println!("{}", map.get_current_room()),
-        Err(e) => println!("{:?}", e),
     }
 }
