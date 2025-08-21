@@ -1,4 +1,5 @@
 mod map;
+pub use map::GraphMap;
 pub use map::Map;
 
 mod exits;

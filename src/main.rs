@@ -4,6 +4,8 @@ use gameinfo::levels::level000;
 use map::{Direction, Map, Room};
 use user_input::get_user_input;
 
+use crate::map::GraphMap;
+
 mod gameinfo;
 mod map;
 mod user_input;
@@ -95,7 +97,7 @@ fn main() {
             .into(),
         Direction::North,
     );
-    let mut map = Map::new(root_room);
+    let mut map = GraphMap::new(root_room);
     println!("Welcome to Liminal Exploration!");
     loop {
         println!("{}", map.get_current_room().get_info());

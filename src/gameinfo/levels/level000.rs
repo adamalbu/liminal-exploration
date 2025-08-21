@@ -45,21 +45,7 @@ impl Room for LevelRoom {
     }
 
     fn new_random_with_entry(description: String, entry_direction: Direction) -> Self {
-        let random_num = rand::random::<f32>();
-
-        let exits = if random_num > 0.8 {
-            Exits::all_2d()
-        } else if random_num > 0.6 {
-            let mut exits: Exits = entry_direction.opposite().into();
-            exits |= Exits::random_exits(2, Exits::all_2d() & !exits);
-            exits
-        } else if random_num > 0.3 {
-            let mut exits: Exits = entry_direction.opposite().into();
-            exits |= Exits::random_exits(1, Exits::all_2d() & !exits);
-            exits
-        } else {
-            entry_direction.opposite().into()
-        };
+        let exits = Exits::random_exits_with_entry(entry_direction);
 
         Self::new(description, exits)
     }

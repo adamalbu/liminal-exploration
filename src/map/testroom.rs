@@ -50,11 +50,11 @@ impl Room for TestRoom {
 
         let exits = if random_num > 0.8 {
             Exits::all_2d()
-        } else if random_num > 0.6 {
+        } else if random_num > 0.5 {
             let mut exits: Exits = entry_direction.opposite().into();
             exits |= Exits::random_exits(2, Exits::all_2d() & !exits);
             exits
-        } else if random_num > 0.3 {
+        } else if random_num > 0.15 {
             let mut exits: Exits = entry_direction.opposite().into();
             exits |= Exits::random_exits(1, Exits::all_2d() & !exits);
             exits

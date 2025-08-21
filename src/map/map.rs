@@ -5,8 +5,16 @@ use petgraph::{
     visit::EdgeRef,
 };
 
+pub trait Map<T: Room> {
+    fn new(root_room: T) -> Self
+    where
+        Self: Sized;
+    fn travel(&mut self, direction: Direction) -> Result<String, TravelError>;
+    fn get_current_room(&self) -> &T;
+}
+
 #[derive(Debug)]
-pub struct Map<T: Room> {
+pub struct GraphMap<T: Room> {
     graph: Graph<T, Direction, Directed>,
     pub current_room_id: NodeIndex,
 }
@@ -24,8 +32,8 @@ impl std::fmt::Display for TravelError {
     }
 }
 
-impl<T: Room> Map<T> {
-    pub fn new(root_room: T) -> Self {
+impl<T: Room> Map<T> for GraphMap<T> {
+    fn new(root_room: T) -> Self {
         let mut graph = Graph::<T, Direction, Directed>::new();
         let root_room_id = graph.add_node(root_room);
         Self {
@@ -34,7 +42,7 @@ impl<T: Room> Map<T> {
         }
     }
 
-    pub fn travel(&mut self, direction: Direction) -> Result<String, TravelError> {
+    fn travel(&mut self, direction: Direction) -> Result<String, TravelError> {
         let current_room = self.get_current_room();
         if current_room.get_exits().contains(direction.into()) {
             let new_room_id = match self.get_edge(self.current_room_id, direction) {
@@ -52,6 +60,12 @@ impl<T: Room> Map<T> {
         }
     }
 
+    fn get_current_room(&self) -> &T {
+        &self.graph[self.current_room_id]
+    }
+}
+
+impl<T: Room> GraphMap<T> {
     fn generate_room(&mut self, entry_direction: Direction) -> NodeIndex {
         let new_room = Room::new_random_with_entry("[generated room]".into(), entry_direction); // TODO: Create actual description
         self.graph.add_node(new_room)
@@ -71,10 +85,6 @@ impl<T: Room> Map<T> {
     #[allow(dead_code)]
     pub fn get_room(&self, room_id: NodeIndex<u32>) -> &T {
         &self.graph[room_id]
-    }
-
-    pub fn get_current_room(&self) -> &T {
-        &self.graph[self.current_room_id]
     }
 
     fn get_edge(

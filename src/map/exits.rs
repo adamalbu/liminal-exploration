@@ -44,6 +44,24 @@ impl Exits {
         }
         generated_exits
     }
+
+    pub fn random_exits_with_entry(entry_direction: Direction) -> Exits {
+        let random_num = rand::random::<f32>();
+
+        if random_num > 0.8 {
+            Exits::all_2d()
+        } else if random_num > 0.5 {
+            let mut exits: Exits = entry_direction.opposite().into();
+            exits |= Exits::random_exits(2, Exits::all_2d() & !exits);
+            exits
+        } else if random_num > 0.15 {
+            let mut exits: Exits = entry_direction.opposite().into();
+            exits |= Exits::random_exits(1, Exits::all_2d() & !exits);
+            exits
+        } else {
+            entry_direction.opposite().into()
+        }
+    }
 }
 
 impl From<Direction> for Exits {
