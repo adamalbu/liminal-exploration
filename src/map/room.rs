@@ -36,15 +36,7 @@ impl Room {
 
         format!("{}\nExits are {}", self.description, exits_str)
     }
-}
 
-impl std::fmt::Display for Room {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.get_info())
-    }
-}
-
-impl Room {
     pub fn new(description: String, exits: Exits) -> Self {
         Self { description, exits }
     }
@@ -54,11 +46,11 @@ impl Room {
 
         let exits = if random_num > 0.8 {
             Exits::all_2d()
-        } else if random_num > 0.4 {
+        } else if random_num > 0.6 {
             let mut exits: Exits = entry_direction.opposite().into();
             exits |= Exits::random_exits(2, Exits::all_2d() & !exits);
             exits
-        } else if random_num > 0.2 {
+        } else if random_num > 0.3 {
             let mut exits: Exits = entry_direction.opposite().into();
             exits |= Exits::random_exits(1, Exits::all_2d() & !exits);
             exits
@@ -67,5 +59,11 @@ impl Room {
         };
 
         Self::new(description, exits)
+    }
+}
+
+impl std::fmt::Display for Room {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.get_info())
     }
 }
