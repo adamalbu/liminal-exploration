@@ -6,8 +6,8 @@ use petgraph::{
 };
 
 #[derive(Debug)]
-pub struct Map {
-    graph: Graph<Room, Direction, Directed>,
+pub struct Map<T: Room> {
+    graph: Graph<T, Direction, Directed>,
     pub current_room_id: NodeIndex,
 }
 
@@ -24,9 +24,9 @@ impl std::fmt::Display for TravelError {
     }
 }
 
-impl Map {
-    pub fn new(root_room: Room) -> Self {
-        let mut graph = Graph::<Room, Direction, Directed>::new();
+impl<T: Room> Map<T> {
+    pub fn new(root_room: T) -> Self {
+        let mut graph = Graph::<T, Direction, Directed>::new();
         let root_room_id = graph.add_node(root_room);
         Self {
             graph,
@@ -36,7 +36,7 @@ impl Map {
 
     pub fn travel(&mut self, direction: Direction) -> Result<String, TravelError> {
         let current_room = self.get_current_room();
-        if current_room.exits.contains(direction.into()) {
+        if current_room.get_exits().contains(direction.into()) {
             let new_room_id = match self.get_edge(self.current_room_id, direction) {
                 Some(edge_ref) => edge_ref.target(),
                 None => {
@@ -69,11 +69,11 @@ impl Map {
     }
 
     #[allow(dead_code)]
-    pub fn get_room(&self, room_id: NodeIndex<u32>) -> &Room {
+    pub fn get_room(&self, room_id: NodeIndex<u32>) -> &T {
         &self.graph[room_id]
     }
 
-    pub fn get_current_room(&self) -> &Room {
+    pub fn get_current_room(&self) -> &T {
         &self.graph[self.current_room_id]
     }
 

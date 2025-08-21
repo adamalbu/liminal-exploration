@@ -2,10 +2,13 @@ mod map;
 pub use map::Map;
 
 mod exits;
-use exits::Exits;
+pub use exits::Exits;
 
 mod direction;
 pub use direction::Direction;
 
 mod room;
 pub use room::Room;
+
+mod testroom;
+pub use testroom::TestRoom;

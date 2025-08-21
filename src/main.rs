@@ -1,8 +1,10 @@
 use std::{fmt, io::Write};
 
+use gameinfo::levels::level000;
 use map::{Direction, Map, Room};
 use user_input::get_user_input;
 
+mod gameinfo;
 mod map;
 mod user_input;
 
@@ -85,7 +87,7 @@ impl Command {
 }
 
 fn main() {
-    let root_room = Room::new_random_with_entry(
+    let root_room = level000::LevelRoom::new_random_with_entry(
         "The room is an endless maze of peeling, \
        yellowed wallpaper and damp, stained carpet, all under the harsh, unblinking glare of a \
        humming fluorescent light. There are a few scattered electrical outlets, but no other \

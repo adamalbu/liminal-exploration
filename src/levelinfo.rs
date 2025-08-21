@@ -1,8 +1,4 @@
-enum Dimention {
-    Frontrooms,
-    Backrooms,
-    Broken,
-}
+use crate::map::Room;
 
 struct LevelNumber {
     main: u16,
@@ -22,19 +18,20 @@ impl LevelNumber {
     }
 }
 
-pub struct Level {
+pub struct Level<T: Room> {
     number: LevelNumber,
     name: String,
+    room: T,
 }
 
-impl Level {
-    pub fn new_main(main_num: u16, name: String) -> Self {
+impl<T: Room> Level<T> {
+    pub fn new_main(main_num: u16, name: String, room: T) -> Self {
         let number = LevelNumber::new_main(main_num);
-        Self { number, name }
+        Self { number, name, room }
     }
 
-    pub fn new_sub(main_num: u16, sub_num: u16, name: String) -> Self {
+    pub fn new_sub(main_num: u16, sub_num: u16, name: String, room: T) -> Self {
         let number = LevelNumber::new_sub(main_num, sub_num);
-        Self { number, name }
+        Self { number, name, room }
     }
 }
